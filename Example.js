@@ -6,7 +6,7 @@ const bus = new EventEmitter();
 const checkMark = "✅";
 const errorMark = "❌";
 const infoMark = "👉";
-
+const warningMark = "⚠️";
 
 //email
 const emailtestInput = ["Test@Test.com","Test","Test@Test.com```"];
@@ -87,7 +87,7 @@ async function runTest(browser,page,targetName,targetObj){
         document.querySelector('#firstName').select();
       });
 
-      //console.log("Start to wait for validaiton mode result ...")
+      console.log(infoMark,"Start to wait for validaiton mode result ...")
       while (validationModeResultReady == false){
         //wait here
       }
@@ -97,6 +97,25 @@ async function runTest(browser,page,targetName,targetObj){
     }
 
 
+    //get html if current validation failed
+    if (currentTestResult == false){
+      console.log(infoMark,"Start to get html ...")
+      //get html
+      const notificationDiv = await page.evaluate(() => {
+        var testDiv = document.getElementById("blend-toast-portal-undefined");
+        var subDiv = testDiv.getElementsByTagName('div');
+        var returnList = [];
+        for (var i =0; i < subDiv.length; i++){
+          returnList.push(subDiv[i].innerHTML);
+        }
+        return returnList;
+      });
+
+      console.log(infoMark,"End of get html ...")
+      //console.log(notificationDiv);
+      console.log(warningMark," Notification: ", notificationDiv[notificationDiv.length -1 ]);
+      console.log(warningMark," Notification: ", notificationDiv[notificationDiv.length -2 ]);
+    }
     //console.log(checkMark, "Testing: ", currentid, ": ", currenttestInput[testIndex]);
     if (currentTestResult == currenttestExpectedResult[testIndex]){
       console.log(checkMark,"Pass.")
@@ -175,6 +194,8 @@ async function runTest(browser,page,targetName,targetObj){
       console.log(infoMark,"Page is ready"); //This is to wait for the auto country code
     }
 
+    //console.log(args[0]);
+    //console.log(validationMode);
     if (validationMode && args[0].includes(validaitonID[testProgress])){
       //get the last element as result
       let argn = 0;
