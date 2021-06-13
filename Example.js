@@ -6,7 +6,7 @@ const bus = new EventEmitter();
 const checkMark = "✅";
 const errorMark = "❌";
 const infoMark = "👉";
-
+const warningMark = "⚠️";
 
 //email
 const emailtestInput = ["Test@Test.com","Test","Test@Test.com```"];
@@ -20,20 +20,26 @@ const lastNameResult = [false,true,false];
 //username
 const userNameInput = ["w","myusername123","&123&","a".repeat(20)];
 const userNameResult = [false,true,false,false];
+//phone number
+const phoneNumberInput = ["202-5553-227", "2025553227"];
+const phoneNumberResult = [true,true];
+//password
+const passwordInput = ["T8X~USV(sF.5sTs3"]
+const passwordResult = [true]
 
 
-const packtestInpunt = [emailtestInput,firstNameInput,lastNameInput,userNameInput];
-const packtestResult = [emailtestResult,firstNameResult,lastNameResult,userNameResult];
+const packtestInpunt = [emailtestInput,firstNameInput,lastNameInput,userNameInput,phoneNumberInput,passwordInput];
+const packtestResult = [emailtestResult,firstNameResult,lastNameResult,userNameResult,phoneNumberResult,passwordResult];
 
 
 
 //testID
-const testID = ["email","firstName","lastName","username"];
-const validaitonID = ["EMAIL","","","USER"];
+const testID = ["email","firstName","lastName","username","phoneNumber","accountPassword"];
+const validaitonID = ["EMAIL","","","USER","PHONE","PASS CHECK"];
 
 let testIndex = 0; //index of each test case for one of the test field
 let testProgress = 0; //current test progress for each test field
-const testTotal = 4; //total number of test
+const testTotal = 6; //total number of test
 
 let pageReady = false;
 let inputReady = false;
@@ -43,6 +49,8 @@ let validationMode = false;
 let validationModeTarget = "";
 let validationModeResult = false;
 let validationModeResultReady = false;
+
+let validationModePassword = false;
 
 let initMode = true;
 
@@ -78,7 +86,35 @@ async function runTest(browser,page,targetName,targetObj){
     if (currentid == "firstName" || currentid == "lastName"){
       //those two do not have validaion
       currentTestResult = true;
-    }else{
+    
+    }else 
+    if (currentid == "accountPassword"){ //hack here as the result come back immediately
+      validationModePassword = true;
+      validationMode = true;
+      validationModeTarget = currentid;
+      validationModeResultReady = false;
+
+      await page.focus('#accountPassword');
+      await page.keyboard.press('End');
+      await page.keyboard.press('Backspace');
+      await page.keyboard.type(currenttestInput[testIndex].slice(-1));
+
+      console.log(infoMark,"Start to wait for validaiton mode result of password ...")
+      if (!validationModeResultReady){
+        await new Promise(resolve => bus.once('validationModeResultReady', resolve));
+      }
+      
+      console.log(infoMark,"validationModeResult: ",validationModeResult);
+      currentTestResult = validationModeResult.every(v => v === true);
+      console.log(infoMark,"currentTestResult: ",currentTestResult);
+
+      //click to get the pop up
+      await page.evaluate(() => {
+        document.querySelector('#firstName').select();
+      });
+
+    }
+    else{
       //click on somewhere else to get the validation result
       validationMode = true;
       validationModeTarget = currentid;
@@ -87,8 +123,8 @@ async function runTest(browser,page,targetName,targetObj){
         document.querySelector('#firstName').select();
       });
 
-      //console.log("Start to wait for validaiton mode result ...")
-      while (validationModeResultReady == false){
+      console.log(infoMark,"Start to wait for validaiton mode result ...")
+      while (validationModeResultReady == false){ //need to change this, script can dead lock here
         //wait here
       }
 
@@ -97,6 +133,25 @@ async function runTest(browser,page,targetName,targetObj){
     }
 
 
+    //get html if current validation failed
+    if (currentTestResult == false){
+      console.log(infoMark,"Start to get html ...")
+      //get html
+      const notificationDiv = await page.evaluate(() => {
+        var testDiv = document.getElementById("blend-toast-portal-undefined");
+        var subDiv = testDiv.getElementsByTagName('div');
+        var returnList = [];
+        for (var i =0; i < subDiv.length; i++){
+          returnList.push(subDiv[i].innerHTML);
+        }
+        return returnList;
+      });
+
+      console.log(infoMark,"End of get html ...")
+      //console.log(notificationDiv);
+      console.log(warningMark," Notification: ", notificationDiv[notificationDiv.length -1 ]);
+      console.log(warningMark," Notification: ", notificationDiv[notificationDiv.length -2 ]);
+    }
     //console.log(checkMark, "Testing: ", currentid, ": ", currenttestInput[testIndex]);
     if (currentTestResult == currenttestExpectedResult[testIndex]){
       console.log(checkMark,"Pass.")
@@ -118,7 +173,7 @@ async function runTest(browser,page,targetName,targetObj){
       //console.log("DEBUG: testProgress: ", testProgress);
       if (testProgress == testTotal){
         //console.log("DEBUG: I am going to close it ....");
-        browser.close();
+        //browser.close();
       }
 
     }
@@ -157,12 +212,9 @@ async function runTest(browser,page,targetName,targetObj){
   //await page.screenshot({path: 'example.png'});
   
   page.on('console', async msg => {
-
-    //console.log("Log Type: ", msg.type())
     
-    const args = await Promise.all(msg.args().map(a => a.jsonValue())).catch({
-      //something
-    });
+
+    const args = await Promise.all(msg.args().map(a => a.jsonValue()));
 
     if (initMode){
       console.log(infoMark, "Init Mode: ", args[0]);
@@ -175,26 +227,78 @@ async function runTest(browser,page,targetName,targetObj){
       console.log(infoMark,"Page is ready"); //This is to wait for the auto country code
     }
 
+    // console.log("===Start===")
+    // console.log(args[0]);
+    // console.log(args[1]);
+    // console.log(args[2]);
+    // console.log("===End===");
+
+    //console.log(validationMode);
+
+    //validationMode setup for password
+    if (validationMode && validaitonID[testProgress] == "PASS CHECK" && validationModePassword){
+      //wait till typing is finished
+      //console.log("===Start in password validation mode===")
+      //console.log(args[0]);
+      //console.log(args[1]);
+      //console.log(args[2]);
+      //console.log("===End in password validation mode===");
+      if(args[0].includes("CHANGE ID")){
+        //get the current input value
+        //console.log("DEBUG:: ",args[2])
+        if (args[2]["value"] == packtestInpunt[testProgress][testIndex]){
+          validationModePassword = false;
+          return;
+        }
+      }
+      return;
+    }
+
     if (validationMode && args[0].includes(validaitonID[testProgress])){
+      
+      //password
+      if (validaitonID[testProgress] == "PASS CHECK" && (!validationModePassword)){
+        //console.log("Final PASS result", args[1]);
+        validationModeResultReady = true;
+        validationMode = false;
+        validationModeResult = args[1];
+        bus.emit('validationModeResultReady');
+      }
+      
       //get the last element as result
       let argn = 0;
       while (args[argn] != undefined){
         argn = argn + 1;
       }
 
-      // console.log(args[0]);
-      // console.log(args[1]);
-      // console.log(args[2]);
-      // console.log(args[3]);
+      //console.log(args[0]);
+      //console.log(args[1]);
+      //console.log(args[2]);
+      //console.log(args[3]);
 
       validationModeResult = args[argn - 1];
-      validationModeResultReady = true;
-      validationMode = false;
+
 
       //the result for username is reverse ...
       if (validaitonID[testProgress] == "USER"){
         validationModeResult = validationModeResult ? false : true;
       }
+      //the result of phone number is to check if the object is empty
+      if (validaitonID[testProgress] == "PHONE"){
+        // console.log(validationModeResult);
+        // if (validationModeResult.includes("CHECKING")){
+        //   return;
+        // } //not this message
+        
+        // validationModeResult = validationModeResult.hasOwnProperty("numberType");
+        // cannot resolve the object for some reason, assume true for now
+        validationModeResult = true;
+      }
+
+
+      validationModeResultReady = true;
+      validationMode = false;
+
 
       return;
     }
