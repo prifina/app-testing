@@ -1,12 +1,6 @@
 const puppeteer = require("puppeteer");
-//const dotenv = require("dotenv");
-//dotenv.config({ path: "./env" });
 
-//testMatch: ["<rootDir>/__tests__/**/*.js"],
-
-//i18n.init();
 const i18nTranslate = require("../getI18n");
-//console.log(i18nTranslate);
 i18nTranslate.init();
 
 const isDebugging = () => {
