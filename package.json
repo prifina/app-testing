@@ -1,5 +1,13 @@
 {
   "dependencies": {
-    "puppeteer": "^5.5.0"
+    "aws-amplify": "^4.1.1",
+    "aws-appsync": "^4.0.3",
+    "dotenv": "^10.0.0",
+    "jest": "^27.0.4",
+    "jest-cli": "^27.0.4",
+    "puppeteer": "^10.0.0"
+  },
+  "jest": {
+    "setupFiles": ["dotenv/config"]
   }
 }

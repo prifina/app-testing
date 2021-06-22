@@ -1,0 +1,7 @@
+const strings = {
+  en: {
+    cancelButton: "Cancel",
+    /* commnets here */
+    nextButton: "Next",
+  },
+};
