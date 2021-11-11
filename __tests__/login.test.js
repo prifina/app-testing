@@ -279,12 +279,22 @@ describe("Test Login page ", () => {
     done();
   }, 6000);
 
+  test("login create account click", async (done) => {
+    await page.click(".CreateAccountButton");
+
+    const createAccountTitle = i18nTranslate.__("createAccountTitle");
+    const checkTitle = await checkThis(page, "body", createAccountTitle, 3000);
+    expect(checkTitle).toBe(true);
+    await page.click(".BackButton");
+    done();
+  }, 6000);
+
   test("login forgot password click", async (done) => {
     await page.click(".ForgotPasswordButton");
     const forgotPasswordTitle = i18nTranslate.__("resetPasswordTitle");
     const checkTitle = await checkThis(page, "body", forgotPasswordTitle, 3000);
     expect(checkTitle).toBe(true);
-    await page.click(".BackButton");
+    await page.click(".LoginLinkButton");
     done();
   }, 6000);
   /*

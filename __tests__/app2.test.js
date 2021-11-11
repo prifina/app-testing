@@ -80,3 +80,16 @@ test("login form works correctly", async () => {
   await page2.waitForSelector('[data-testid="success"]')
   */
 }, 16000);
+
+  /*
+  test("nav loads correctly", async () => {
+    const navbar = await page.$eval('[data-testid="navbar"]', (el) =>
+      el ? true : false
+    );
+    const listItems = await page.$$('[data-testid="navBarLi"]');
+
+    expect(navbar).toBe(true);
+    expect(listItems.length).toBe(4);
+  });
+  */
+});

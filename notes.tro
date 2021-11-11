@@ -1,0 +1,7 @@
+smaller setup.... 
+
+const puppeteer = require('puppeteer-core');
+const chromium = require('chrome-aws-lambda');
+
+
+https://dev.to/joshvincent/aws-amplify-puppeteer-32m5
